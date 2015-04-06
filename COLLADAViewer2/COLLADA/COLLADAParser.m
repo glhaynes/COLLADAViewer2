@@ -17,7 +17,8 @@
 
 /////////////////////////////////////////////////////////////////
 //
-static const float COLLADAParserMetersPerInch = 0.0254f;
+//static const float COLLADAParserMetersPerInch = 0.0254f;
+static const float COLLADAParserMetersPerInch = 1.0f;
 
 
 @implementation COLLADAParser

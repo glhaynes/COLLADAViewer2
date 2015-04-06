@@ -237,7 +237,7 @@
 {
    NSSavePanel *sPanel = [NSSavePanel savePanel];
 
-   NSArray *fileTypes = [NSArray arrayWithObject:@"modelplist"];
+   NSArray *fileTypes = [NSArray arrayWithObject:@"plist"];
    
    [sPanel setMessage:NSLocalizedString(
        @"Exporting to Modelplist format.",
@@ -296,7 +296,7 @@
          root.numberOfVertices.unsignedIntegerValue;
    }
    
-   if(AGLKMeshMaximumNumberOfVertices <
+   /*if(AGLKMeshMaximumNumberOfVertices <
       cumulativeNumberOfVertices)
    {
       NSAlert *exportAlert =
@@ -326,9 +326,9 @@
          contextInfo:nil];
    }
    else
-   {
+   {*/
       [self unconditionallyExportModelplist];
-   }
+   //}
 }
 
 

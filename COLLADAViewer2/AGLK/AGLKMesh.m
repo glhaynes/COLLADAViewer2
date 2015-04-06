@@ -80,6 +80,12 @@
 // "indexData", and "commands" keys with associated values.
 - (NSDictionary *)plistRepresentation
 {
+    for (int i = 0; i < self.numberOfVertices; i++)
+    {
+        ///const AGLKMeshVertex *bytes = (const AGLKMeshVertex *)[self.vertexData bytes];
+        ///NSLog(@"%d: %f %f %f, %f %f %f", i, bytes[i].position.x, bytes[i].position.y, bytes[i].position.z, bytes[i].tangent.x, bytes[i].tangent.y, bytes[i].tangent.z);
+    }
+    
    return [NSDictionary dictionaryWithObjectsAndKeys:
       self.mutableVertexData, @"vertexAttributeData", 
       self.mutableIndexData, @"indexData", 
@@ -408,6 +414,12 @@
       [self numberOfVertices],
       @"Attempt to append to omany vertices");
    
+    /***NSLog(@"Appending vertex: p{%f, %f, %f} n{%f, %f, %f}, t0{%f, %f}, t1{%f, %f}",
+          aVertex.position.x, aVertex.position.y, aVertex.position.z,
+          aVertex.normal.x, aVertex.normal.y, aVertex.normal.z,
+          aVertex.texCoords0.s, aVertex.texCoords0.t,
+          aVertex.texCoords1.s, aVertex.texCoords1.t);***/
+    
    [self.mutableVertexData appendBytes:&aVertex
       length:sizeof(aVertex)];
 }
@@ -514,6 +526,8 @@
 //
 - (void)appendIndex:(GLushort)index;
 {
+    ///NSLog(@"appending index: %d", index);
+    
    [self.mutableIndexData appendBytes:&index 
       length:sizeof(index)];
 }
@@ -672,6 +686,101 @@ ANoShareTriangle;
                &triangle.b.texCoords0,
                &triangle.c.texCoords0
             );
+            
+            /////////////////////////////////////////
+            AGLKMeshVertex a = triangle.a;
+            AGLKMeshVertex b = triangle.b;
+            AGLKMeshVertex c = triangle.c;
+             
+            GLKVector3 edge1 = GLKVector3Subtract(b.position, a.position);
+            GLKVector3 edge2 = GLKVector3Subtract(c.position, a.position);
+             
+            float deltaU1 = b.texCoords0.x - a.texCoords0.x;
+            float deltaV1 = b.texCoords0.y - a.texCoords0.y;
+            float deltaU2 = c.texCoords0.x - a.texCoords0.x;
+            float deltaV2 = c.texCoords0.y - a.texCoords0.y;
+
+             /*NSLog(@"deltaU1: %f", deltaU1);
+             NSLog(@"deltaV1: %f", deltaV1);
+             NSLog(@"deltaU2: %f", deltaU2);
+             NSLog(@"deltaV2: %f", deltaV2);*/
+
+            float f = 1.0f / (deltaU1 * deltaV2 - deltaU2 * deltaV1);
+             
+            ///NSLog(@"f: %f", f);
+
+            GLKVector3 tangent; //, Bitangent;
+
+            tangent.x = f * (deltaV2 * edge1.x - deltaV1 * edge2.x);
+            tangent.y = f * (deltaV2 * edge1.y - deltaV1 * edge2.y);
+            tangent.z = f * (deltaV2 * edge1.z - deltaV1 * edge2.z);
+             
+            /*
+            Bitangent.x = f * (-DeltaU2 * Edge1.x - DeltaU1 * Edge2.x);
+            Bitangent.y = f * (-DeltaU2 * Edge1.y - DeltaU1 * Edge2.y);
+            Bitangent.z = f * (-DeltaU2 * Edge1.z - DeltaU1 * Edge2.z);
+            */
+
+            triangle.a.tangent = triangle.b.tangent = triangle.c.tangent = GLKVector3Normalize(tangent);
+             
+             /*
+             GLKVector3 v1 = triangle.a.position;
+             GLKVector3 v2 = triangle.b.position;
+             GLKVector3 v3 = triangle.c.position;
+             
+             GLKVector2 w1 = triangle.a.texCoords0;
+             GLKVector2 w2 = triangle.b.texCoords0;
+             GLKVector2 w3 = triangle.c.texCoords0;
+             
+             float x1 = v2.x - v1.x;
+             float x2 = v3.x - v1.x;
+             float y1 = v2.y - v1.y;
+             float y2 = v3.y - v1.y;
+             float z1 = v2.z - v1.z;
+             float z2 = v3.z - v1.z;
+             
+             float s1 = w2.x - w1.x;
+             float s2 = w3.x - w1.x;
+             float t1 = w2.y - w1.y;
+             float t2 = w3.y - w1.y;
+             
+             float r = 1.0f / (s1 * t2 - s2 * t1);
+             
+             if (isinf(r))
+             {
+                 //r = 1.0f;
+             }
+             
+             GLKVector3 sdir = GLKVector3Make((t2 * x1 - t1 * x2) * r,
+                                              (t2 * y1 - t1 * y2) * r,
+                                              (t2 * z1 - t1 * z2) * r);
+             //GLKVector3 tdir = GLKVector3Make((s1 * x2 - s2 * x1) * r,
+             //                                 (s1 * y2 - s2 * y1) * r,
+             //                                 (s1 * z2 - s2 * z1) * r);
+             
+             //triangle.a.tangent = GLKVector3DotProduct(triangle.a.normal, sdir);
+             //triangle.a.tangent = GLKVector3Normalize(sdir); //triangle.a.tangent);
+
+             //triangle.b.tangent = GLKVector3Subtract(sdir, triangle.b.normal);
+             //triangle.b.tangent = GLKVector3MultiplyScalar(triangle.b.tangent,
+             //                                              GLKVector3DotProduct(triangle.b.normal, sdir));
+             //triangle.b.tangent = GLKVector3Normalize(sdir);
+
+             //triangle.c.tangent = GLKVector3Subtract(sdir, triangle.c.normal);
+             //triangle.c.tangent = GLKVector3MultiplyScalar(triangle.c.tangent,
+             //                                              GLKVector3DotProduct(triangle.c.normal, sdir));
+             //triangle.c.tangent = GLKVector3Normalize(sdir);
+             
+             if (sdir.x == sdir.y == sdir.z == 0.0f)
+             {
+                 triangle.a.tangent = triangle.b.tangent = triangle.c.tangent = GLKVector3Make(0.0f, 0.0f, 0.0f);
+             }
+             else
+             {
+                 triangle.a.tangent = triangle.b.tangent = triangle.c.tangent = GLKVector3Normalize(sdir);
+             }
+*/
+            /////////////////////////////////////////
             
             [noShareTrianglesData appendBytes:&triangle
                length:sizeof(ANoShareTriangle)];

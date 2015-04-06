@@ -20,6 +20,7 @@ typedef struct
    GLKVector3 normal;
    GLKVector2 texCoords0;
    GLKVector2 texCoords1;
+   GLKVector3 tangent;
 }
 AGLKMeshVertex;
 
